@@ -192,10 +192,43 @@ def render_quote(overlay, out_path):
     subprocess.run(cmd, check=True)
 
 
-def post_reel(path, caption):
+def pick_audio(state):
+    """Pick a trending music track via Meta's Audio API. Returns audio_id or None."""
+    if os.environ.get("USE_AUDIO", "1") == "0":
+        return None
+    try:
+        res = graph("ig_audio", {"audio_type": "music", "user_id": IG_USER})
+        tracks = res.get("audio") or []
+        used = state.get("usedAudio") or []
+        fresh = [t for t in tracks if t.get("audio_id") and t["audio_id"] not in used]
+        pool = (fresh or [t for t in tracks if t.get("audio_id")])[:15]
+        if not pool:
+            log("no trending audio returned")
+            return None
+        t = random.choice(pool)
+        log("audio:", t.get("title"), "-", t.get("display_artist"))
+        return t["audio_id"]
+    except Exception as e:
+        log("audio lookup failed, posting without audio:", e)
+        return None
+
+
+def post_reel(path, caption, audio_id=None):
     size = os.path.getsize(path)
-    c = graph(f"{IG_USER}/media", {"media_type": "REELS", "upload_type": "resumable",
-                                    "caption": caption, "share_to_feed": "true"}, post=True)
+    params = {"media_type": "REELS", "upload_type": "resumable",
+              "caption": caption, "share_to_feed": "true"}
+    c = None
+    if audio_id:
+        try:
+            p2 = dict(params)
+            p2["audio_configuration"] = json.dumps({"audio_id": audio_id, "audio_volume": 80, "video_volume": 15})
+            c = graph(f"{IG_USER}/media", p2, post=True)
+            log("container created with audio")
+        except Exception as e:
+            log("audio rejected, retrying without audio:", e)
+            audio_id = None
+    if c is None:
+        c = graph(f"{IG_USER}/media", params, post=True)
     cid = c["id"]
     log("container", cid, "size", size)
     data = open(path, "rb").read()
@@ -274,7 +307,8 @@ def main():
     if DRY_RUN:
         log("dry run, not posting")
         return
-    media_id = post_reel(path, caption)
+    audio_id = pick_audio(state)
+    media_id = post_reel(path, caption, audio_id)
     log("published", media_id)
 
     if source == "pool":
@@ -284,6 +318,7 @@ def main():
     hist.append(int(time.time() * 1000))
     state.update({"lastPosted": n, "postedItems": posted, "history": hist,
                   "recentQuotes": ([overlay] + recent)[:1000] if source == "gemini" else recent,
+                  "usedAudio": (([audio_id] if audio_id else []) + (state.get("usedAudio") or []))[:60],
                   "lastSource": source, "lastMediaId": media_id, "lastCaption": caption})
     json.dump(state, open(STATE_FILE, "w"), indent=1)
 
