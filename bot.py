@@ -192,21 +192,50 @@ def render_quote(overlay, out_path):
     subprocess.run(cmd, check=True)
 
 
+def load_music_list():
+    p = os.path.join(ROOT, "music.txt")
+    if not os.path.exists(p):
+        return []
+    out = []
+    for ln in open(p, encoding="utf-8"):
+        ln = ln.strip()
+        if ln and not ln.startswith("#"):
+            out.append(ln)
+    return out
+
+
 def pick_audio(state):
-    """Pick a trending music track via Meta's Audio API. Returns audio_id or None."""
+    """Your music.txt list first (search by name, or a raw audio id), then trending music."""
     if os.environ.get("USE_AUDIO", "1") == "0":
         return None
+    used = state.get("usedAudio") or []
     try:
+        mine = load_music_list()
+        random.shuffle(mine)
+        for entry in mine:
+            if entry.isdigit():
+                log("audio (your list, id):", entry)
+                return entry
+            try:
+                res = graph("ig_audio", {"audio_type": "music", "user_id": IG_USER, "search_query": entry})
+            except Exception as e:
+                log("search failed for", entry, ":", e)
+                continue
+            tracks = [t for t in (res.get("audio") or []) if t.get("audio_id")]
+            if tracks:
+                t = tracks[0]
+                log("audio (your list):", t.get("title"), "-", t.get("display_artist"))
+                return t["audio_id"]
+            log("not available on Instagram:", entry)
         res = graph("ig_audio", {"audio_type": "music", "user_id": IG_USER})
         tracks = res.get("audio") or []
-        used = state.get("usedAudio") or []
         fresh = [t for t in tracks if t.get("audio_id") and t["audio_id"] not in used]
         pool = (fresh or [t for t in tracks if t.get("audio_id")])[:15]
         if not pool:
             log("no trending audio returned")
             return None
         t = random.choice(pool)
-        log("audio:", t.get("title"), "-", t.get("display_artist"))
+        log("audio (trending):", t.get("title"), "-", t.get("display_artist"))
         return t["audio_id"]
     except Exception as e:
         log("audio lookup failed, posting without audio:", e)

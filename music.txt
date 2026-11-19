@@ -1,0 +1,8 @@
+# Your music list. One entry per line. Lines starting with # are ignored.
+# The bot tries these FIRST (in random order) and only uses trending music if none are found.
+# Each line can be a song name, "song artist", or an Instagram audio id (digits only).
+# Only tracks that Instagram allows third-party apps to use will be found.
+#
+# Examples (delete the # to use):
+# Peaceful Reveries
+# November Magic
