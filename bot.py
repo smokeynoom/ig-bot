@@ -23,6 +23,7 @@ LANE_TAGS = {
     "m": "#couplegoals #relationshipgoals #lovehumor #relatable",
     "r": "#couplegoals #lovequotes #relationshipgoals #flirty",
     "t": "#couplegoals #lovehumor #relatable #justsaying",
+    "u": "#imissyou #longdistance #lovequotes #couplegoals",
 }
 VIDEO_TAGS = {"d": "#lovequotes #relationshipgoals #couplegoals", "f": "#lovehumor #relatable #couplegoals",
               "e": "#lovequotes #loyalty #relationshipgoals", "s": "#softlove #lovequotes #aesthetic"}
@@ -65,7 +66,7 @@ def build_posted(state):
 
 def all_ids():
     return ([f"f{i:02d}" for i in range(1, 31)] + [f"m{i:02d}" for i in range(1, 31)]
-            + [f"r{i:02d}" for i in range(1, 31)] + [f"t{i:02d}" for i in range(1, 31)]
+            + [f"r{i:02d}" for i in range(1, 31)] + [f"t{i:02d}" for i in range(1, 31)] + [f"u{i:02d}" for i in range(1, 31)]
             + [f"v{i:03d}" for i in range(1, POOL_COUNT + 1)])
 
 
@@ -80,6 +81,9 @@ def pool_post(item):
     elif kind == "r":
         path, lane = f"reply_videos/reply_{num:02d}.mp4", "r"
         caption = LANE_TAGS["r"]
+    elif kind == "u":
+        path, lane = f"missing_videos/missing_{num:02d}.mp4", "u"
+        caption = LANE_TAGS["u"]
     elif kind == "t":
         path, lane = f"caption_videos/caption_{num:02d}.mp4", "t"
         caption = LANE_TAGS["t"]
