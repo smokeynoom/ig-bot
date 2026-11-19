@@ -66,9 +66,9 @@ def build_posted(state):
 
 
 def all_ids():
-    return ([f"f{i:02d}" for i in range(1, 31)] + [f"m{i:02d}" for i in range(1, 31)]
-            + [f"r{i:02d}" for i in range(1, 31)] + [f"t{i:02d}" for i in range(1, 31)] + [f"u{i:02d}" for i in range(1, 31)] + [f"w{i:02d}" for i in range(1, 31)]
-            + [f"v{i:03d}" for i in range(1, POOL_COUNT + 1)])
+    # GitHub bot owns the newer lanes only. The n8n workflow owns f/m/r/v, so the two never overlap.
+    return ([f"t{i:02d}" for i in range(1, 31)] + [f"u{i:02d}" for i in range(1, 31)]
+            + [f"w{i:02d}" for i in range(1, 31)])
 
 
 def pool_post(item):
