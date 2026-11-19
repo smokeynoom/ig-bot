@@ -219,25 +219,39 @@ def main():
     recent = state.get("recentQuotes") or []
     item_id = None
 
+    def pick_pool():
+        iid = queue[0]
+        p, cap = pool_post(iid)
+        if not os.path.exists(p):
+            raise RuntimeError("Missing video file: " + p)
+        return iid, p, cap
+
+    out = None
+    overlay = None
+    if not use_pool:
+        try:
+            for attempt in range(4):
+                out = gemini_quote(recent)
+                overlay = re.sub(r"\s+", " ", str(out.get("overlay", ""))).strip()
+                if len(overlay.split()) < 6:
+                    continue
+                if too_similar(overlay, recent):
+                    log("duplicate, retrying:", overlay)
+                    continue
+                break
+            else:
+                raise RuntimeError("Could not get a fresh quote")
+        except Exception as e:
+            log("Gemini failed:", e)
+            if not queue:
+                raise
+            use_pool = True
+
     if use_pool:
-        item_id = queue[0]
-        path, caption = pool_post(item_id)
+        item_id, path, caption = pick_pool()
         overlay = item_id
         source = "pool"
-        if not os.path.exists(path):
-            raise RuntimeError("Missing video file: " + path)
     else:
-        for attempt in range(4):
-            out = gemini_quote(recent)
-            overlay = re.sub(r"\s+", " ", str(out.get("overlay", ""))).strip()
-            if len(overlay.split()) < 6:
-                continue
-            if too_similar(overlay, recent):
-                log("duplicate, retrying:", overlay)
-                continue
-            break
-        else:
-            raise RuntimeError("Could not get a fresh quote, nothing posted")
         caption = str(out.get("caption", "")).strip()[:2100] or CAPTION_TEMPLATE
         path = os.path.join(tempfile.gettempdir(), "quote.mp4")
         render_quote(overlay, path)
