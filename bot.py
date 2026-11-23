@@ -28,6 +28,7 @@ LANE_TAGS = {
     "y": "#lovequotes #relationshipgoals #couplegoals #softlove",
     "z": "#lovequotes #relationshipgoals #couplegoals #relatable",
     "k": "#couplegoals #relatable #lovehumor #crushproblems",
+    "p": "#lovequotes #relationshipgoals #couplegoals #lovelanguage",
 }
 VIDEO_TAGS = {"d": "#lovequotes #relationshipgoals #couplegoals", "f": "#lovehumor #relatable #couplegoals",
               "e": "#lovequotes #loyalty #relationshipgoals", "s": "#softlove #lovequotes #aesthetic"}
@@ -72,7 +73,8 @@ def all_ids():
     # GitHub bot owns the newer lanes only. The n8n workflow owns f/m/r/v, so the two never overlap.
     return ([f"t{i:02d}" for i in range(1, 31)] + [f"u{i:02d}" for i in range(1, 31)]
             + [f"w{i:02d}" for i in range(1, 31)] + [f"y{i:02d}" for i in range(1, 31)]
-            + [f"z{i:02d}" for i in range(1, 31)] + [f"k{i:02d}" for i in range(1, 31)])
+            + [f"z{i:02d}" for i in range(1, 31)] + [f"k{i:02d}" for i in range(1, 31)]
+            + [f"p{i:02d}" for i in range(1, 31)])
 
 
 def pool_post(item):
@@ -86,6 +88,9 @@ def pool_post(item):
     elif kind == "r":
         path, lane = f"reply_videos/reply_{num:02d}.mp4", "r"
         caption = LANE_TAGS["r"]
+    elif kind == "p":
+        path, lane = f"mean_videos/mean_{num:02d}.mp4", "p"
+        caption = LANE_TAGS["p"]
     elif kind == "k":
         path, lane = f"cool_videos/cool_{num:02d}.mp4", "k"
         caption = LANE_TAGS["k"]
