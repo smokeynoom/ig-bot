@@ -162,8 +162,16 @@ def gemini_quote(recent):
                                      "caption": {"type": "STRING"}},
                                      "required": ["style", "overlay", "caption"]}}}
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-    out = http(url, data=json.dumps(body).encode(),
-               headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY}, timeout=60)
+    out = None
+    for attempt in range(2):
+        try:
+            out = http(url, data=json.dumps(body).encode(),
+                       headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY}, timeout=150)
+            break
+        except (TimeoutError, OSError) as e:
+            log("Gemini timeout, attempt", attempt + 1, ":", e)
+            if attempt == 1:
+                raise
     txt = "".join(p.get("text", "") for p in out["candidates"][0]["content"]["parts"])
     return json.loads(txt)
 
