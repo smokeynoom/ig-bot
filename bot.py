@@ -161,16 +161,19 @@ def gemini_quote(recent):
                                      "style": {"type": "STRING"}, "overlay": {"type": "STRING"},
                                      "caption": {"type": "STRING"}},
                                      "required": ["style", "overlay", "caption"]}}}
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+    models = [GEMINI_MODEL] + [m for m in ("gemini-flash-latest", "gemini-2.5-flash") if m != GEMINI_MODEL]
     out = None
-    for attempt in range(2):
+    for i, model in enumerate(models):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         try:
             out = http(url, data=json.dumps(body).encode(),
-                       headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY}, timeout=150)
+                       headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY}, timeout=60)
+            if model != GEMINI_MODEL:
+                log("used fallback model", model)
             break
-        except (TimeoutError, OSError) as e:
-            log("Gemini timeout, attempt", attempt + 1, ":", e)
-            if attempt == 1:
+        except Exception as e:
+            log("Gemini", model, "failed:", str(e)[:160].replace("\n", " "))
+            if i == len(models) - 1:
                 raise
     txt = "".join(p.get("text", "") for p in out["candidates"][0]["content"]["parts"])
     return json.loads(txt)
