@@ -14,21 +14,31 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
+# One real run at a time. Dry runs get their own lane so they never wait.
 concurrency:
-  group: post-reel
+  group: ${{ github.event.inputs.dry_run == '1' && 'post-reel-dry' || 'post-reel' }}
   cancel-in-progress: false
+
+env:
+  # Minutes from the start of one run to the start of the next one.
+  POST_EVERY_MIN: "58"
+  GH_REPO: ${{ github.repository }}
 
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
+      - name: Note start time
+        run: echo "RUN_START=$(date +%s)" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Post
+        timeout-minutes: 25
         env:
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
@@ -45,3 +55,24 @@ jobs:
           git config user.email "bot@users.noreply.github.com"
           git add posted_state.json
           git diff --cached --quiet || (git commit -m "state" && git pull --rebase && git push)
+      - name: Wait, then start the next run
+        if: ${{ !cancelled() && github.event.inputs.dry_run != '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          now=$(date +%s)
+          target=$((RUN_START + POST_EVERY_MIN * 60))
+          if [ "$target" -gt "$now" ]; then
+            echo "Waiting $(( (target - now) / 60 )) min before the next run"
+            sleep $((target - now))
+          fi
+          waiting=$(gh run list --workflow post.yml --limit 30 --json databaseId,status \
+            | jq --argjson me "$GITHUB_RUN_ID" \
+              '[.[] | select(.databaseId != $me and .status != "completed" and .status != "in_progress")] | length')
+          if [ "$waiting" -gt 0 ]; then
+            echo "Another run is already queued and will carry on."
+            exit 0
+          fi
+          gh workflow run post.yml --ref "$GITHUB_REF_NAME"
+          echo "Next run started"
