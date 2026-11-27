@@ -1,5 +1,5 @@
 {
- "lastPosted": 102,
+ "lastPosted": 103,
  "poolIndex": 17,
  "postedItems": [
   "v001",
@@ -96,7 +96,8 @@
   "w12",
   "w13",
   "w14",
-  "w15"
+  "w15",
+  "w16"
  ],
  "history": [
   1794975660780,
@@ -194,7 +195,8 @@
   1795797748638,
   1795801246690,
   1795808279036,
-  1795815221600
+  1795815221600,
+  1795818685524
  ],
  "recentQuotes": [
   "when they take twenty minutes to reply to a simple text and you still save every single notification just because it has their name on it",
@@ -214,9 +216,10 @@
   "when you stare at your screen waiting for five minutes to pass so it doesnt look like you were just hovering over the keyboard"
  ],
  "lastSource": "pool",
- "lastMediaId": "18114306206224273",
+ "lastMediaId": "17986336649908533",
  "lastCaption": "#lovequotes #couplegoals #relationshipgoals #soft",
  "usedAudio": [
+  "4592557824320671",
   "1382788023218400",
   "1619590552945205",
   "1924822242216699",
@@ -275,7 +278,6 @@
   "1088061764037890",
   "1804682417466371",
   "1216680374354693",
-  "1839269673333289",
-  "213441570410391"
+  "1839269673333289"
  ]
 }
